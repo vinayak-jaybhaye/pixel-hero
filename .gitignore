@@ -1,0 +1,50 @@
+# Build artifacts
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+*.out
+
+# Build directories
+/build/
+/bin/
+/dist/
+/Debug/
+/Release/
+/CMakeFiles/
+
+# CMake
+CMakeCache.txt
+cmake_install.cmake
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# CLion / JetBrains IDEs
+.idea/
+cmake-build-*/
+
+# Logs
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Backup files
+*~
+*.swp
+
+# External dependencies (if vendored separately)
+vendor/*
+!vendor/.keep   # keep placeholder if needed
+
+# Generated assets
+*.png~
+*.tmp
+*.bak
