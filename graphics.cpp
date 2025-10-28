@@ -3,6 +3,8 @@
 #include <GL/glut.h>
 #include <cmath>
 #include <algorithm>
+#include <map>
+#include <list>
 
 void drawLineDDA(float x1, float y1, float x2, float y2, Color color) {
     glColor4f(color.r, color.g, color.b, color.a);
@@ -32,67 +34,84 @@ void drawLineDDA(float x1, float y1, float x2, float y2, Color color) {
 void drawLineBresenham(int x1, int y1, int x2, int y2, Color color, int thickness) {
     glColor4f(color.r, color.g, color.b, color.a);
     glPointSize(thickness);
-    
+
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
-    int sx = (x1 < x2) ? 1 : -1;
-    int sy = (y1 < y2) ? 1 : -1;
-    int err = dx - dy;
-    
+    int xi = (x2 > x1) ? 1 : -1;
+    int yi = (y2 > y1) ? 1 : -1;
+
     glBegin(GL_POINTS);
-    while (true) {
-        glVertex2i(x1, y1);
-        
-        if (x1 == x2 && y1 == y2) break;
-        
-        int e2 = 2 * err;
-        if (e2 > -dy) {
-            err -= dy;
-            x1 += sx;
+
+    // Check which slope region we’re in
+    if (dy <= dx) {
+        // slope < 1
+        int D = 2 * dy - dx;
+        int y = y1;
+
+        for (int x = x1; x != x2 + xi; x += xi) {
+            glVertex2i(x, y);
+            if (D > 0) {
+                y += yi;
+                D += 2 * (dy - dx);
+            } else {
+                D += 2 * dy;
+            }
         }
-        if (e2 < dx) {
-            err += dx;
-            y1 += sy;
+    } else {
+        // slope >= 1
+        int D = 2 * dx - dy;
+        int x = x1;
+
+        for (int y = y1; y != y2 + yi; y += yi) {
+            glVertex2i(x, y);
+            if (D > 0) {
+                x += xi;
+                D += 2 * (dx - dy);
+            } else {
+                D += 2 * dx;
+            }
         }
     }
+
     glEnd();
     glPointSize(1.0f);
 }
 
-void drawCircleMidpoint(int centerX, int centerY, int radius, Color color, bool filled) {
+
+void plotCirclePoints(int xc, int yc, int x, int y) {
+    glVertex2i(xc + x, yc + y);
+    glVertex2i(xc - x, yc + y);
+    glVertex2i(xc + x, yc - y);
+    glVertex2i(xc - x, yc - y);
+    glVertex2i(xc + y, yc + x);
+    glVertex2i(xc - y, yc + x);
+    glVertex2i(xc + y, yc - x);
+    glVertex2i(xc - y, yc - x);
+}
+
+void drawCircleMidpoint(int xc, int yc, int r, Color color, bool filled) {
     glColor4f(color.r, color.g, color.b, color.a);
-    
+
+    // Optional: Filled circle
     if (filled) {
-        for (int y = -radius; y <= radius; y++) {
-            int x = sqrt(radius * radius - y * y);
+        for (int y = -r; y <= r; y++) {
+            int x = (int)sqrt(r * r - y * y);
             glBegin(GL_LINES);
-            glVertex2i(centerX - x, centerY + y);
-            glVertex2i(centerX + x, centerY + y);
+            glVertex2i(xc - x, yc + y);
+            glVertex2i(xc + x, yc + y);
             glEnd();
         }
         return;
     }
-    
-    int x = 0;
-    int y = radius;
-    int p = 1 - radius;
-    
+
+    int x = 0, y = r;
+    int p = 1 - r;
+
     glPointSize(2.0f);
     glBegin(GL_POINTS);
-    
-    auto plotCirclePoints = [&](int cx, int cy, int x, int y) {
-        glVertex2i(cx + x, cy + y);
-        glVertex2i(cx - x, cy + y);
-        glVertex2i(cx + x, cy - y);
-        glVertex2i(cx - x, cy - y);
-        glVertex2i(cx + y, cy + x);
-        glVertex2i(cx - y, cy + x);
-        glVertex2i(cx + y, cy - x);
-        glVertex2i(cx - y, cy - x);
-    };
-    
-    plotCirclePoints(centerX, centerY, x, y);
-    
+
+    plotCirclePoints(xc, yc, x, y);
+
     while (x < y) {
         x++;
         if (p < 0) {
@@ -101,90 +120,133 @@ void drawCircleMidpoint(int centerX, int centerY, int radius, Color color, bool 
             y--;
             p += 2 * (x - y) + 1;
         }
-        plotCirclePoints(centerX, centerY, x, y);
+        plotCirclePoints(xc, yc, x, y);
     }
+
     glEnd();
     glPointSize(1.0f);
 }
 
+struct Edge {
+    float x;
+    float dx_dy;
+    int ymax;
+    bool operator<(const Edge &e) const { return x < e.x; }
+};
+
 void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientColor, bool useGradient) {
     if (vertices.size() < 3) return;
-    
-    float minY = vertices[0].y, maxY = vertices[0].y;
-    for (const auto& vertex : vertices) {
-        minY = std::min(minY, vertex.y);
-        maxY = std::max(maxY, vertex.y);
+
+    std::map<int, std::list<Edge>> edgeTable;
+    int ymin = 100000, ymax = -100000;
+
+    //  Build the edge table
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        int x1 = round(vertices[i].x);
+        int y1 = round(vertices[i].y);
+        int x2 = round(vertices[(i + 1) % vertices.size()].x);
+        int y2 = round(vertices[(i + 1) % vertices.size()].y);
+
+        if (y1 == y2) continue; // skip horizontal edges
+
+        ymin = std::min({ymin, y1, y2});
+        ymax = std::max({ymax, y1, y2});
+
+        Edge e;
+        if (y1 < y2) {
+            e.x = x1;
+            e.ymax = y2;
+            e.dx_dy = float(x2 - x1) / float(y2 - y1);
+            edgeTable[y1].push_back(e);
+        } else {
+            e.x = x2;
+            e.ymax = y1;
+            e.dx_dy = float(x1 - x2) / float(y1 - y2);
+            edgeTable[y2].push_back(e);
+        }
     }
-    
-    for (int y = minY; y <= maxY; y++) {
-        std::vector<float> intersections;
-        
-        for (size_t i = 0; i < vertices.size(); i++) {
-            size_t j = (i + 1) % vertices.size();
-            
-            if ((vertices[i].y <= y && vertices[j].y > y) || 
-                (vertices[j].y <= y && vertices[i].y > y)) {
-                
-                float x = vertices[i].x + (y - vertices[i].y) * 
-                         (vertices[j].x - vertices[i].x) / (vertices[j].y - vertices[i].y);
-                intersections.push_back(x);
-            }
+
+    // Initialize the Active Edge Table (AET)
+    std::list<Edge> AET;
+
+    // For each scanline
+    for (int y = ymin; y < ymax; ++y) {
+        // Add new edges from ET to AET
+        if (edgeTable.count(y)) {
+            AET.splice(AET.end(), edgeTable[y]);
         }
-        
-        std::sort(intersections.begin(), intersections.end());
-        
-        for (size_t i = 0; i < intersections.size(); i += 2) {
-            if (i + 1 < intersections.size()) {
-                glBegin(GL_LINES);
-                
-                if (useGradient) {
-                    float t = (y - minY) / (maxY - minY);
-                    glColor4f(
-                        fillColor.r + t * (gradientColor.r - fillColor.r),
-                        fillColor.g + t * (gradientColor.g - fillColor.g),
-                        fillColor.b + t * (gradientColor.b - fillColor.b),
-                        fillColor.a
-                    );
-                } else {
-                    glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-                }
-                
-                glVertex2f(intersections[i], y);
-                glVertex2f(intersections[i + 1], y);
-                glEnd();
-            }
+
+        // Remove edges for which y == ymax
+        AET.remove_if([y](const Edge &e) { return e.ymax <= y; });
+
+        // Sort AET by x
+        AET.sort();
+
+        // Optional: gradient color based on scanline
+        if (useGradient) {
+            float t = (float)(y - ymin) / (float)(ymax - ymin);
+            glColor4f(
+                fillColor.r + t * (gradientColor.r - fillColor.r),
+                fillColor.g + t * (gradientColor.g - fillColor.g),
+                fillColor.b + t * (gradientColor.b - fillColor.b),
+                fillColor.a
+            );
+        } else {
+            glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
         }
+
+        // Draw pairs of intersections as filled lines
+        auto it = AET.begin();
+        while (it != AET.end()) {
+            auto itNext = std::next(it);
+            if (itNext == AET.end()) break;
+
+            glBegin(GL_LINES);
+            glVertex2f(it->x, y);
+            glVertex2f(itNext->x, y);
+            glEnd();
+
+            std::advance(it, 2);
+        }
+
+        // Update x for all edges in AET
+        for (auto &e : AET) e.x += e.dx_dy;
     }
 }
 
+// Compute region code for a point (textbook version)
 int computeOutCode(float x, float y, float xmin, float ymin, float xmax, float ymax) {
     int code = INSIDE;
-    
+
     if (x < xmin) code |= LEFT;
     else if (x > xmax) code |= RIGHT;
-    
+
     if (y < ymin) code |= BOTTOM;
     else if (y > ymax) code |= TOP;
-    
+
     return code;
 }
 
+// Cohen–Sutherland Line Clipping (textbook version)
 bool cohenSutherlandClip(float& x1, float& y1, float& x2, float& y2,
                          float xmin, float ymin, float xmax, float ymax) {
     int outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
     int outcode2 = computeOutCode(x2, y2, xmin, ymin, xmax, ymax);
     bool accept = false;
-    
+
     while (true) {
         if (!(outcode1 | outcode2)) {
+            // Both points inside
             accept = true;
             break;
         } else if (outcode1 & outcode2) {
+            // Both points share an outside zone → reject
             break;
         } else {
+            // Line needs clipping
             float x, y;
             int outcodeOut = outcode1 ? outcode1 : outcode2;
-            
+
             if (outcodeOut & TOP) {
                 x = x1 + (x2 - x1) * (ymax - y1) / (y2 - y1);
                 y = ymax;
@@ -198,18 +260,16 @@ bool cohenSutherlandClip(float& x1, float& y1, float& x2, float& y2,
                 y = y1 + (y2 - y1) * (xmin - x1) / (x2 - x1);
                 x = xmin;
             }
-            
+
             if (outcodeOut == outcode1) {
-                x1 = x;
-                y1 = y;
+                x1 = x; y1 = y;
                 outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
             } else {
-                x2 = x;
-                y2 = y;
+                x2 = x; y2 = y;
                 outcode2 = computeOutCode(x2, y2, xmin, ymin, xmax, ymax);
             }
         }
     }
-    
+
     return accept;
 }
