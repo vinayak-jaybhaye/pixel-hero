@@ -18,9 +18,16 @@ public:
     int jumpCount;
     static const int maxJumps = 2;
     
+    // Wall slide/jump state
+    bool onWall;
+    bool wallSliding;
+    int wallDirection;  // -1 = wall on left, 1 = wall on right
+    float wallJumpCooldown;
+    
     Player();
     void update();
     void jump();
+    void wallJump();
     void moveLeft();
     void moveRight();
     void stopMoving();

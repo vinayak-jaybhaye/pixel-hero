@@ -11,7 +11,7 @@ BUILDDIR = build
 
 # Source files
 SOURCES = main.cpp game.cpp player.cpp platform.cpp collectible.cpp \
-          particle.cpp graphics.cpp renderer.cpp
+          particle.cpp graphics.cpp renderer.cpp enemy.cpp
 
 # Object files (placed inside build/)
 OBJECTS = $(addprefix $(BUILDDIR)/, $(SOURCES:.cpp=.o))
