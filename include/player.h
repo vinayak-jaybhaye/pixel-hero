@@ -5,7 +5,7 @@
 #include "constants.h"
 
 class Player {
-public:
+   public:
     float x, y;
     float vx, vy;
     float targetVx;
@@ -17,13 +17,13 @@ public:
     bool facingRight;
     int jumpCount;
     static const int maxJumps = 2;
-    
+
     // Wall slide/jump state
     bool onWall;
     bool wallSliding;
     int wallDirection;  // -1 = wall on left, 1 = wall on right
     float wallJumpCooldown;
-    
+
     Player();
     void update();
     void jump();

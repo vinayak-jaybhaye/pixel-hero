@@ -26,13 +26,13 @@ void Player::reset() {
 
 void Player::update() {
     wasOnGround = onGround;
-    
+
     // Update animation timer
     animationTimer += 0.1f;
-    
+
     // Decrease wall jump cooldown
     if (wallJumpCooldown > 0) wallJumpCooldown -= 0.016f;
-    
+
     // Apply physics
     if (!onGround) {
         if (wallSliding) {
@@ -53,17 +53,17 @@ void Player::update() {
         wallSliding = false;
         onWall = false;
     }
-    
+
     // Smooth acceleration towards target velocity (skip during wall jump cooldown)
     if (wallJumpCooldown <= 0) {
         float velocityDiff = targetVx - vx;
         vx += velocityDiff * ACCELERATION;
     }
-    
+
     // Update position
     x += vx;
     y += vy;
-    
+
     // Update squash and stretch animation
     if (onGround && fabs(vx) > 0.5f) {
         squashScale = 1.0f + sin(animationTimer * 0.3f) * 0.1f;
@@ -76,11 +76,13 @@ void Player::update() {
     } else {
         squashScale = 1.0f;
     }
-    
+
     // Update facing direction
-    if (vx > 0.1f) facingRight = true;
-    else if (vx < -0.1f) facingRight = false;
-    
+    if (vx > 0.1f)
+        facingRight = true;
+    else if (vx < -0.1f)
+        facingRight = false;
+
     // Reset wall state each frame (game.cpp will re-set it during collision)
     onWall = false;
     wallSliding = false;
@@ -98,14 +100,14 @@ void Player::jump() {
 
 void Player::wallJump() {
     if (!wallSliding) return;
-    
+
     vy = JUMP_VELOCITY * 0.9f;
     vx = wallDirection * (-PLAYER_SPEED * 2.5f);  // Jump away from wall
-    jumpCount = 1;  // Allow one more jump in air
+    jumpCount = 1;                                // Allow one more jump in air
     onGround = false;
     wallSliding = false;
     onWall = false;
-    wallJumpCooldown = 0.2f;  // Brief cooldown to prevent immediate re-sticking
+    wallJumpCooldown = 0.2f;            // Brief cooldown to prevent immediate re-sticking
     facingRight = (wallDirection < 0);  // Face away from wall
     squashScale = 0.75f;
 }

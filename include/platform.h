@@ -5,14 +5,14 @@
 #include <vector>
 
 class Platform {
-public:
+   public:
     float x, y, width, height;
     Color color;
     bool isMoving;
     float moveSpeed, moveRange, originalX, moveTimer;
-    
-    Platform(float px, float py, float w, float h, Color c, 
-             bool moving = false, float speed = 0, float range = 0);
+
+    Platform(float px, float py, float w, float h, Color c, bool moving = false, float speed = 0,
+             float range = 0);
     void update();
 };
 

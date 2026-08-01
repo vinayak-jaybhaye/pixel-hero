@@ -48,27 +48,18 @@ struct Transform2D {
             }
         }
         for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                matrix[i][j] = result[i][j];
+            for (int j = 0; j < 3; j++) matrix[i][j] = result[i][j];
     }
 
     // Translation Transformation
     void translate(float tx, float ty) {
-        float t[3][3] = {
-            {1, 0, tx},
-            {0, 1, ty},
-            {0, 0, 1}
-        };
+        float t[3][3] = {{1, 0, tx}, {0, 1, ty}, {0, 0, 1}};
         multiply(t);
     }
 
     // Scaling Transformation
     void scale(float sx, float sy) {
-        float s[3][3] = {
-            {sx, 0,  0},
-            {0,  sy, 0},
-            {0,  0,  1}
-        };
+        float s[3][3] = {{sx, 0, 0}, {0, sy, 0}, {0, 0, 1}};
         multiply(s);
     }
 
@@ -77,11 +68,7 @@ struct Transform2D {
         float rad = angle * M_PI / 180.0f;
         float c = cos(rad);
         float s = sin(rad);
-        float r[3][3] = {
-            {c, -s, 0},
-            {s,  c, 0},
-            {0,  0, 1}
-        };
+        float r[3][3] = {{c, -s, 0}, {s, c, 0}, {0, 0, 1}};
         multiply(r);
     }
 

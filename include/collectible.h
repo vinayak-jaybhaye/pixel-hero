@@ -6,13 +6,13 @@
 #include <vector>
 
 class Collectible {
-public:
+   public:
     float x, y;
     float rotation;
     float bobOffset;
     bool collected;
     Color color;
-    
+
     Collectible(float px, float py);
     void update();
 };

@@ -8,18 +8,18 @@
 
 void drawLineDDA(float x1, float y1, float x2, float y2, Color color) {
     glColor4f(color.r, color.g, color.b, color.a);
-    
+
     float dx = x2 - x1;
     float dy = y2 - y1;
     float steps = std::max(abs(dx), abs(dy));
-    
+
     if (steps == 0) return;
-    
+
     float xIncrement = dx / steps;
     float yIncrement = dy / steps;
-    
+
     float x = x1, y = y1;
-    
+
     glPointSize(2.0f);
     glBegin(GL_POINTS);
     for (int i = 0; i <= steps; i++) {
@@ -77,7 +77,6 @@ void drawLineBresenham(int x1, int y1, int x2, int y2, Color color, int thicknes
     glPointSize(1.0f);
 }
 
-
 void plotCirclePoints(int xc, int yc, int x, int y) {
     glVertex2i(xc + x, yc + y);
     glVertex2i(xc - x, yc + y);
@@ -106,7 +105,7 @@ void drawCircleMidpoint(int xc, int yc, int r, Color color, bool filled) {
 
     int x = 0;
     int y = r;
-    int p = 1 - r;   // Initial decision parameter
+    int p = 1 - r;  // Initial decision parameter
 
     glPointSize(2.0f);
     glBegin(GL_POINTS);
@@ -130,7 +129,6 @@ void drawCircleMidpoint(int xc, int yc, int r, Color color, bool filled) {
     glPointSize(1.0f);
 }
 
-
 // Bresenham Circle Helper Function
 void drawCirclePointsGL(int xc, int yc, int x, int y, float r, float g, float b) {
     glColor3f(r, g, b);
@@ -145,7 +143,6 @@ void drawCirclePointsGL(int xc, int yc, int x, int y, float r, float g, float b)
     glVertex2f(xc - y, yc - x);
     glEnd();
 }
-
 
 void drawCircleBresenham(int xc, int yc, int r, Color color, bool filled) {
     glColor4f(color.r, color.g, color.b, color.a);
@@ -182,16 +179,15 @@ void drawCircleBresenham(int xc, int yc, int r, Color color, bool filled) {
     glPointSize(1.0f);
 }
 
-
-
 struct Edge {
     float x;
     float dx_dy;
     int ymax;
-    bool operator<(const Edge &e) const { return x < e.x; }
+    bool operator<(const Edge& e) const { return x < e.x; }
 };
 
-void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientColor, bool useGradient) {
+void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientColor,
+                  bool useGradient) {
     if (vertices.size() < 3) return;
 
     std::map<int, std::list<Edge>> edgeTable;
@@ -204,7 +200,7 @@ void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientC
         int x2 = round(vertices[(i + 1) % vertices.size()].x);
         int y2 = round(vertices[(i + 1) % vertices.size()].y);
 
-        if (y1 == y2) continue; // skip horizontal edges
+        if (y1 == y2) continue;  // skip horizontal edges
 
         ymin = std::min({ymin, y1, y2});
         ymax = std::max({ymax, y1, y2});
@@ -234,7 +230,7 @@ void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientC
         }
 
         // Remove edges for which y == ymax
-        AET.remove_if([y](const Edge &e) { return e.ymax <= y; });
+        AET.remove_if([y](const Edge& e) { return e.ymax <= y; });
 
         // Sort AET by x
         AET.sort();
@@ -242,12 +238,9 @@ void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientC
         // Optional: gradient color based on scanline
         if (useGradient) {
             float t = (float)(y - ymin) / (float)(ymax - ymin);
-            glColor4f(
-                fillColor.r + t * (gradientColor.r - fillColor.r),
-                fillColor.g + t * (gradientColor.g - fillColor.g),
-                fillColor.b + t * (gradientColor.b - fillColor.b),
-                fillColor.a
-            );
+            glColor4f(fillColor.r + t * (gradientColor.r - fillColor.r),
+                      fillColor.g + t * (gradientColor.g - fillColor.g),
+                      fillColor.b + t * (gradientColor.b - fillColor.b), fillColor.a);
         } else {
             glColor4f(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
         }
@@ -267,7 +260,7 @@ void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientC
         }
 
         // Update x for all edges in AET
-        for (auto &e : AET) e.x += e.dx_dy;
+        for (auto& e : AET) e.x += e.dx_dy;
     }
 }
 
@@ -275,18 +268,22 @@ void scanLineFill(std::vector<Point>& vertices, Color fillColor, Color gradientC
 int computeOutCode(float x, float y, float xmin, float ymin, float xmax, float ymax) {
     int code = INSIDE;
 
-    if (x < xmin) code |= LEFT;
-    else if (x > xmax) code |= RIGHT;
+    if (x < xmin)
+        code |= LEFT;
+    else if (x > xmax)
+        code |= RIGHT;
 
-    if (y < ymin) code |= BOTTOM;
-    else if (y > ymax) code |= TOP;
+    if (y < ymin)
+        code |= BOTTOM;
+    else if (y > ymax)
+        code |= TOP;
 
     return code;
 }
 
 // Cohen–Sutherland Line Clipping
-bool cohenSutherlandClip(float& x1, float& y1, float& x2, float& y2,
-                         float xmin, float ymin, float xmax, float ymax) {
+bool cohenSutherlandClip(float& x1, float& y1, float& x2, float& y2, float xmin, float ymin,
+                         float xmax, float ymax) {
     int outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
     int outcode2 = computeOutCode(x2, y2, xmin, ymin, xmax, ymax);
     bool accept = false;
@@ -319,10 +316,12 @@ bool cohenSutherlandClip(float& x1, float& y1, float& x2, float& y2,
             }
 
             if (outcodeOut == outcode1) {
-                x1 = x; y1 = y;
+                x1 = x;
+                y1 = y;
                 outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
             } else {
-                x2 = x; y2 = y;
+                x2 = x;
+                y2 = y;
                 outcode2 = computeOutCode(x2, y2, xmin, ymin, xmax, ymax);
             }
         }

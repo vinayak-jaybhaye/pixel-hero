@@ -41,9 +41,9 @@ Thumbs.db
 *~
 *.swp
 
-# External dependencies (if vendored separately)
+# External dependencies (vendored)
 vendor/*
-!vendor/.keep   # keep placeholder if needed
+!vendor/*.h     # track vendored header-only libraries
 
 # Generated assets
 *.png~

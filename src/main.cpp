@@ -11,17 +11,17 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
+
     if (game) {
         game->render();
     }
-    
+
     glDisable(GL_BLEND);
     glutSwapBuffers();
 }
@@ -31,7 +31,7 @@ void timer(int value) {
         game->update();
     }
     glutPostRedisplay();
-    glutTimerFunc(16, timer, 0); // ~60 FPS
+    glutTimerFunc(16, timer, 0);  // ~60 FPS
 }
 
 void update(int value) {
@@ -92,14 +92,14 @@ int main(int argc, char** argv) {
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("PIXEL HERO");
-    
+
     init();
     printInstructions();
-    
+
     // Create game instance
     game = new Game();
     game->init();
-    
+
     // Register GLUT callbacks
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboardDown);
@@ -108,9 +108,9 @@ int main(int argc, char** argv) {
     glutSpecialUpFunc(specialUp);
     glutTimerFunc(0, timer, 0);
     glutTimerFunc(0, update, 0);
-    
+
     glutMainLoop();
-    
+
     // Cleanup
     delete game;
     return 0;

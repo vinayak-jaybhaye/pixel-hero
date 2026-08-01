@@ -5,12 +5,12 @@
 #include <vector>
 
 enum class EnemyType {
-    PATROL,     // Walks back and forth on a platform
-    STATIC      // Stays in place (like a spike hazard)
+    PATROL,  // Walks back and forth on a platform
+    STATIC   // Stays in place (like a spike hazard)
 };
 
 class Enemy {
-public:
+   public:
     float x, y;
     float vx;
     float width, height;
@@ -20,7 +20,7 @@ public:
     bool facingRight;
     float animationTimer;
     EnemyType type;
-    
+
     Enemy(float px, float py, float left, float right, EnemyType t = EnemyType::PATROL);
     void update();
     void kill();
