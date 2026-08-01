@@ -11,6 +11,7 @@
 
 # Build directories
 /build/
+/dest/
 /bin/
 /dist/
 /Debug/

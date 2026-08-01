@@ -1,21 +1,23 @@
 # Makefile
 
 CXX = g++
-CXXFLAGS = -Wall -O2 -std=c++11
+CXXFLAGS = -Wall -O2 -std=c++11 -I include
 LDFLAGS = -lGL -lGLU -lglut -lm
+
+# Directories
+SRCDIR = src
+INCDIR = include
+BUILDDIR = build
 
 # Source files
 SOURCES = main.cpp game.cpp player.cpp platform.cpp collectible.cpp \
           particle.cpp graphics.cpp renderer.cpp
 
-# Object file directory
-OBJDIR = dest
-
-# Object files (placed inside dest/)
-OBJECTS = $(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
+# Object files (placed inside build/)
+OBJECTS = $(addprefix $(BUILDDIR)/, $(SOURCES:.cpp=.o))
 
 # Executable name
-TARGET = pixel_hero
+TARGET = $(BUILDDIR)/pixel_hero
 
 # Default target
 all: $(TARGET)
@@ -24,17 +26,17 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
-# Ensure dest directory exists, then compile
-$(OBJDIR)/%.o: %.cpp | $(OBJDIR)
+# Compile source files from src/ into build/
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Create object directory if missing
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+# Create build directory if missing
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
 
 # Clean build files
 clean:
-	rm -rf $(OBJDIR) $(TARGET)
+	rm -rf $(BUILDDIR)
 
 # Run the game
 run: $(TARGET)
